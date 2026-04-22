@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<header th:fragment="header" class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}">🎭 Réservations</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+                data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/}">Accueil</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/artists}">Artistes</a>
+                </li>
+            </ul>
+            <div class="navbar-nav">
+                <span sec:authorize="!isAuthenticated()">
+                    <a class="nav-link" th:href="@{/login}">Se connecter</a>
+                    <a class="nav-link" th:href="@{/register}">S'inscrire</a>
+                </span>
+                <span sec:authorize="isAuthenticated()">
+                    <span class="nav-link text-light">
+                        Bonjour <strong sec:authentication="principal.username"></strong>
+                    </span>
+                    <a class="nav-link" th:href="@{/profile}">Mon profil</a>
+                    <form th:action="@{/logout}" method="post" class="d-inline">
+                        <button class="btn btn-outline-light btn-sm">Se déconnecter</button>
+                    </form>
+                </span>
+            </div>
+        </div>
+    </div>
+</header>
+</body>
+</html>

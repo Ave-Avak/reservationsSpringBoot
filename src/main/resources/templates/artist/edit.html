@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+<head>
+    <title>Modifier un artiste</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2 th:text="|Modifier : ${artist.firstname} ${artist.lastname}|">
+        Modifier artiste
+    </h2>
+
+    <form th:action="@{/artists/{id}/edit(id=${artist.id})}"
+          th:object="${artist}" th:method="put" class="w-50">
+        <div class="mb-3">
+            <label class="form-label">Prénom *</label>
+            <input type="text" class="form-control"
+                   th:field="*{firstname}" maxlength="60" required>
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('firstname')}"
+                 th:errors="*{firstname}"></div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Nom *</label>
+            <input type="text" class="form-control"
+                   th:field="*{lastname}" maxlength="60" required>
+            <div class="text-danger"
+                 th:if="${#fields.hasErrors('lastname')}"
+                 th:errors="*{lastname}"></div>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-warning">Modifier</button>
+            <a th:href="${back}" class="btn btn-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

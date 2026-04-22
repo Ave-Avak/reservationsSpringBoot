@@ -1,11 +1,20 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
 <head>
-    <meta charset="UTF-8">
-    <title>Projet Réservations</title>
+    <title>Accueil</title>
 </head>
 <body>
-    <h1>Bienvenue sur le Projet Réservations</h1>
-    <p>L'application fonctionne correctement.</p>
+<div layout:fragment="content">
+    <div class="jumbotron text-center py-5">
+        <h1 class="display-4">🎭 Projet Réservations</h1>
+        <p class="lead">Bienvenue sur la plateforme de réservation de spectacles</p>
+        <hr class="my-4">
+        <a class="btn btn-primary btn-lg" th:href="@{/artists}">
+            Voir les artistes
+        </a>
+    </div>
+</div>
 </body>
 </html>
