@@ -137,25 +137,33 @@ public class ProfileController {
 
     @PostMapping("/delete")
     public String deleteAccount(
-            Principal principal,
-            HttpServletRequest request,
-            HttpServletResponse response,
-            RedirectAttributes redirectAttributes) {
+        HttpServletRequest request,
+        HttpServletResponse response,
+        Principal principal,
+        RedirectAttributes redirectAttributes) {
 
-        String login = principal.getName();
-
-        // 1. Suppression en BDD (cascade auto sur users_roles + password_reset_tokens)
-        userService.deleteAccount(login);
-
-        // 2. Déconnexion immédiate (session invalidée, cookie supprimé)
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null) {
-            new SecurityContextLogoutHandler().logout(request, response, auth);
-        }
-
-        // 3. Redirection vers /login avec un message flash
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Votre compte a été supprimé. Au revoir.");
-        return "redirect:/login";
+    // ⚠️ Sécurité : un admin ne peut PAS supprimer son propre compte via le profil
+    // (pour éviter qu'il n'y ait plus aucun admin dans l'application)
+    if (request.isUserInRole("ADMIN")) {
+        redirectAttributes.addFlashAttribute("errorMessage",
+                "Un administrateur ne peut pas supprimer son propre compte. " +
+                "Demandez à un autre administrateur de le faire pour vous.");
+        return "redirect:/profile";
     }
+
+    String login = principal.getName();
+
+    // 1. Suppression en BDD (cascade auto)
+    userService.deleteAccount(login);
+
+    // 2. Déconnexion immédiate
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth != null) {
+        new SecurityContextLogoutHandler().logout(request, response, auth);
+    }
+
+    redirectAttributes.addFlashAttribute("successMessage",
+            "Votre compte a été supprimé. Au revoir.");
+    return "redirect:/login";
+}
 }
