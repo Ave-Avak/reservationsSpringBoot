@@ -16,6 +16,7 @@ import java.util.List;
  * Relations :
  *  - ManyToOne vers Locality (une location appartient à une locality)
  *  - OneToMany vers Show     (un lieu peut héberger plusieurs spectacles)
+ *  - OneToMany vers Representation (un lieu accueille plusieurs dates de spectacle)
  *
  * Le slug est généré automatiquement à partir de la désignation.
  */
@@ -27,7 +28,7 @@ import java.util.List;
 @AllArgsConstructor
 public class Location {
 
-    // Instance statique réutilisée pour tous les slugs (créée une seule fois)
+    // Instance statique réutilisée pour tous les slugs
     private static final Slugify SLUGIFY = Slugify.builder().build();
 
     @Id
@@ -57,21 +58,25 @@ public class Location {
     private Locality locality;
 
     /**
-     * 🆕 Spectacles créés dans ce lieu.
-     * Relation OneToMany bilatérale inverse de Show.location.
+     * Spectacles créés dans ce lieu.
      */
     @OneToMany(mappedBy = "location",
                cascade = {CascadeType.PERSIST},
                fetch = FetchType.LAZY)
     private List<Show> shows = new ArrayList<>();
 
+    /**
+     * 🆕 Représentations programmées dans ce lieu.
+     */
+    @OneToMany(mappedBy = "location",
+               cascade = {CascadeType.PERSIST},
+               fetch = FetchType.LAZY)
+    private List<Representation> representations = new ArrayList<>();
+
     // =============================================================
     // CONSTRUCTEURS MÉTIER
     // =============================================================
 
-    /**
-     * Constructeur principal : crée une location avec génération automatique du slug.
-     */
     public Location(String designation, String address, Locality locality) {
         this.designation = designation;
         this.address = address;
@@ -94,12 +99,9 @@ public class Location {
     }
 
     // =============================================================
-    // 🆕 MÉTHODES MÉTIER pour Shows (synchronisation bilatérale)
+    // MÉTHODES MÉTIER pour Shows (synchronisation bilatérale)
     // =============================================================
 
-    /**
-     * Ajoute un show à ce lieu.
-     */
     public void addShow(Show show) {
         if (!this.shows.contains(show)) {
             this.shows.add(show);
@@ -107,13 +109,26 @@ public class Location {
         }
     }
 
-    /**
-     * Retire un show de ce lieu.
-     */
     public void removeShow(Show show) {
         if (this.shows.contains(show)) {
             this.shows.remove(show);
-            // On ne fait PAS show.setLocation(null) : la FK est NOT NULL
+        }
+    }
+
+    // =============================================================
+    // 🆕 MÉTHODES MÉTIER pour Representations (synchronisation bilatérale)
+    // =============================================================
+
+    public void addRepresentation(Representation representation) {
+        if (!this.representations.contains(representation)) {
+            this.representations.add(representation);
+            representation.setLocation(this);
+        }
+    }
+
+    public void removeRepresentation(Representation representation) {
+        if (this.representations.contains(representation)) {
+            this.representations.remove(representation);
         }
     }
 

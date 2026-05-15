@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Year;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,8 +48,7 @@ public class ShowService {
      * Crée un nouveau spectacle. Vérification d'unicité du slug.
      */
     @Transactional
-    public Show create(String title, String description, Location location,
-                       Integer duration, Integer createdIn) {
+    public Show create(String title, String description, Location location, Short duration, Year createdIn) {
         Show show = new Show(title, description, location, duration, createdIn);
         if (showRepository.existsBySlug(show.getSlug())) {
             throw new IllegalArgumentException(

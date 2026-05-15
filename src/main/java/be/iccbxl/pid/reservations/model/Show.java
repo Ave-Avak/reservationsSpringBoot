@@ -6,14 +6,18 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.time.Year;
+import java.util.ArrayList;     
+import java.util.List;              
 
 /**
  * Représente un spectacle (pièce centrale du projet).
  *
- * Un spectacle a un lieu de création (Location, ManyToOne bilatéral).
- * Le slug est généré automatiquement à partir du titre.
+ * Relations :
+ *  - ManyToOne vers Location (lieu de création) [bilatérale]
+ *  - OneToMany vers Representation (dates de spectacle) [bilatérale]
  *
- * À venir : relations ManyToMany vers Artists (via ArtistType) et OneToMany vers Representations.
+ * Le slug est généré automatiquement à partir du titre.
  */
 @Entity
 @Table(name = "shows")
@@ -42,51 +46,48 @@ public class Show {
     @Column(name = "poster_url", length = 255)
     private String posterUrl;
 
-    /**
-     * Durée en minutes.
-     */
     @Column(name = "duration")
-    private Integer duration;
+    private Short duration;
 
-    /**
-     * Année de création de l'œuvre (1901-2155 en MariaDB).
-     */
-    @Column(name = "created_in")
-    private Integer createdIn;
+    @Column(name = "created_in", columnDefinition = "YEAR")
+    private Year createdIn;
 
-    /**
-     * Indique si le spectacle est disponible à la réservation.
-     */
     @Column(name = "bookable", nullable = false)
     private Boolean bookable = false;
 
     /**
-     * Lieu de création du spectacle.
-     * Relation ManyToOne bilatérale avec Location.
+     * Lieu de création du spectacle (ManyToOne bilatérale).
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id", nullable = false)
     private Location location;
 
+    /**
+     * 🆕 Représentations (dates) de ce spectacle.
+     * Cascade ALL + orphanRemoval : supprimer un show supprime ses représentations.
+     */
+    @OneToMany(mappedBy = "show",
+               cascade = CascadeType.ALL,
+               orphanRemoval = true,
+               fetch = FetchType.LAZY)
+    private List<Representation> representations = new ArrayList<>();
+
     // =============================================================
     // CONSTRUCTEUR MÉTIER
     // =============================================================
 
-    /**
-     * Crée un spectacle avec génération automatique du slug.
-     */
-    public Show(String title, String description, Location location, Integer duration, Integer createdIn) {
+    public Show(String title, String description, Location location, Short duration, Year createdIn) {
         this.title = title;
         this.description = description;
         this.duration = duration;
         this.createdIn = createdIn;
-        this.bookable = false;  // pas bookable par défaut, sécurité
+        this.bookable = false;
         setLocation(location);
         this.slug = SLUGIFY.slugify(title);
     }
 
     // =============================================================
-    // SETTER INTELLIGENT (synchronisation bilatérale)
+    // SETTER INTELLIGENT pour Location (synchronisation bilatérale)
     // =============================================================
 
     public void setLocation(Location newLocation) {
@@ -96,6 +97,23 @@ public class Show {
         this.location = newLocation;
         if (newLocation != null && !newLocation.getShows().contains(this)) {
             newLocation.getShows().add(this);
+        }
+    }
+
+    // =============================================================
+    // 🆕 MÉTHODES MÉTIER pour Representations (synchronisation bilatérale)
+    // =============================================================
+
+    public void addRepresentation(Representation representation) {
+        if (!this.representations.contains(representation)) {
+            this.representations.add(representation);
+            representation.setShow(this);
+        }
+    }
+
+    public void removeRepresentation(Representation representation) {
+        if (this.representations.contains(representation)) {
+            this.representations.remove(representation);
         }
     }
 
