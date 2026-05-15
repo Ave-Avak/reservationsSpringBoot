@@ -93,6 +93,12 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Génération de slugs URL-friendly : "Espace Delvaux" → "espace-delvaux" -->
+		<dependency>
+    		<groupId>com.github.slugify</groupId>
+    		<artifactId>slugify</artifactId>
+    		<version>3.0.7</version>
+		</dependency>
 		<dependency>
     		<groupId>nz.net.ultraq.thymeleaf</groupId>
     		<artifactId>thymeleaf-layout-dialect</artifactId>
