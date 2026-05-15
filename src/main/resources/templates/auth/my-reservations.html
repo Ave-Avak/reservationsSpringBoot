@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+
+<head>
+    <title>Mes réservations</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <div class="container mt-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>🎫 Mes réservations</h1>
+            <a th:href="@{/profile}" class="btn btn-outline-secondary btn-sm">
+                ← Retour au profil
+            </a>
+        </div>
+
+        <!-- Messages flash -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${success}">Message de succès</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}">Message d'erreur</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Aucune réservation -->
+        <div th:if="${#lists.isEmpty(reservations)}" class="alert alert-info">
+            <h5 class="alert-heading">Pas encore de réservation 🎭</h5>
+            <p class="mb-0">
+                Vous n'avez pas encore réservé de spectacle.
+                <a th:href="@{/shows}" class="alert-link">Découvrir le catalogue</a>
+            </p>
+        </div>
+
+        <!-- Liste des réservations -->
+        <div th:unless="${#lists.isEmpty(reservations)}" class="row">
+            <div class="col-12">
+                <p class="text-muted">
+                    <span th:text="${#lists.size(reservations)}">0</span> réservation(s) au total
+                </p>
+            </div>
+
+            <div th:each="r : ${reservations}" class="col-md-6 mb-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+
+                        <!-- Statut badge -->
+                        <div class="float-end">
+                            <span th:if="${r.status.name() == 'PENDING'}"
+                                  class="badge bg-warning text-dark">⏳ En attente</span>
+                            <span th:if="${r.status.name() == 'CONFIRMED'}"
+                                  class="badge bg-success">✓ Confirmée</span>
+                            <span th:if="${r.status.name() == 'CANCELLED'}"
+                                  class="badge bg-secondary">✗ Annulée</span>
+                            <span th:if="${r.status.name() == 'REFUNDED'}"
+                                  class="badge bg-info">💸 Remboursée</span>
+                        </div>
+
+                        <!-- Spectacle -->
+                        <h5 class="card-title" th:text="${r.representation.show.title}">
+                            Titre du spectacle
+                        </h5>
+
+                        <!-- Lieu -->
+                        <p class="text-muted mb-2">
+                            📍 <span th:text="${r.representation.location.designation}">Lieu</span>
+                        </p>
+
+                        <!-- Date de représentation -->
+                        <p class="mb-2">
+                            🗓 <strong th:text="${r.representation.formattedSchedule}">Date</strong>
+                        </p>
+
+                        <!-- Places -->
+                        <p class="mb-2">
+                            🎟 <strong th:text="${r.places}">2</strong>
+                            place<span th:if="${r.places > 1}">s</span> réservée<span th:if="${r.places > 1}">s</span>
+                        </p>
+
+                        <!-- Date de booking -->
+                        <p class="text-muted small mb-3">
+                            Réservée le
+                            <span th:text="${#temporals.format(r.bookingDate, 'dd/MM/yyyy à HH:mm')}">date</span>
+                        </p>
+
+                        <!-- Bouton annuler (uniquement pour PENDING) -->
+                        <div th:if="${r.status.name() == 'PENDING'}">
+                            <form th:action="@{'/profile/reservations/' + ${r.id} + '/cancel'}"
+                                  method="post"
+                                  onsubmit="return confirm('Annuler cette réservation ?');"
+                                  class="d-inline">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    Annuler la réservation
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+</body>
+</html>

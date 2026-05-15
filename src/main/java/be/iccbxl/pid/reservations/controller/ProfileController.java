@@ -2,7 +2,9 @@ package be.iccbxl.pid.reservations.controller;
 
 import be.iccbxl.pid.reservations.dto.PasswordChangeDto;
 import be.iccbxl.pid.reservations.dto.UserProfileDto;
+import be.iccbxl.pid.reservations.model.Reservation;
 import be.iccbxl.pid.reservations.model.User;
+import be.iccbxl.pid.reservations.service.ReservationService;
 import be.iccbxl.pid.reservations.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,13 +16,11 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
+import java.util.List;
 
 @Controller
 @RequestMapping("/profile")
@@ -28,6 +28,7 @@ import java.security.Principal;
 public class ProfileController {
 
     private final UserService userService;
+    private final ReservationService reservationService;   // 🆕
 
     // =========================================================
     // GET /profile — Affichage du profil
@@ -37,7 +38,6 @@ public class ProfileController {
     public String showProfile(Principal principal, Model model) {
         User user = userService.findByLogin(principal.getName());
 
-        // Pré-remplit le DTO de modification de profil avec les valeurs actuelles
         if (!model.containsAttribute("profileDto")) {
             UserProfileDto profileDto = new UserProfileDto();
             profileDto.setEmail(user.getEmail());
@@ -46,7 +46,6 @@ public class ProfileController {
             model.addAttribute("profileDto", profileDto);
         }
 
-        // DTO vide pour le formulaire de changement de mot de passe
         if (!model.containsAttribute("passwordDto")) {
             model.addAttribute("passwordDto", new PasswordChangeDto());
         }
@@ -67,7 +66,6 @@ public class ProfileController {
             RedirectAttributes redirectAttributes) {
 
         if (result.hasErrors()) {
-            // En cas d'erreur, on garde les valeurs saisies et on retourne au formulaire
             redirectAttributes.addFlashAttribute(
                     "org.springframework.validation.BindingResult.profileDto", result);
             redirectAttributes.addFlashAttribute("profileDto", dto);
@@ -102,7 +100,6 @@ public class ProfileController {
             Principal principal,
             RedirectAttributes redirectAttributes) {
 
-        // Vérif que les 2 nouveaux mots de passe correspondent
         if (dto.getNewPassword() != null && !dto.getNewPassword().equals(dto.getNewPasswordConfirm())) {
             result.rejectValue("newPasswordConfirm", "mismatch",
                     "Les mots de passe ne correspondent pas.");
@@ -137,33 +134,84 @@ public class ProfileController {
 
     @PostMapping("/delete")
     public String deleteAccount(
-        HttpServletRequest request,
-        HttpServletResponse response,
-        Principal principal,
-        RedirectAttributes redirectAttributes) {
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
 
-    // ⚠️ Sécurité : un admin ne peut PAS supprimer son propre compte via le profil
-    // (pour éviter qu'il n'y ait plus aucun admin dans l'application)
-    if (request.isUserInRole("ADMIN")) {
-        redirectAttributes.addFlashAttribute("errorMessage",
-                "Un administrateur ne peut pas supprimer son propre compte. " +
-                "Demandez à un autre administrateur de le faire pour vous.");
-        return "redirect:/profile";
+        if (request.isUserInRole("ADMIN")) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Un administrateur ne peut pas supprimer son propre compte. " +
+                    "Demandez à un autre administrateur de le faire pour vous.");
+            return "redirect:/profile";
+        }
+
+        String login = principal.getName();
+        userService.deleteAccount(login);
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            new SecurityContextLogoutHandler().logout(request, response, auth);
+        }
+
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Votre compte a été supprimé. Au revoir.");
+        return "redirect:/login";
     }
 
-    String login = principal.getName();
+    // =========================================================
+    // 🆕 GET /profile/reservations — Mes réservations
+    // =========================================================
 
-    // 1. Suppression en BDD (cascade auto)
-    userService.deleteAccount(login);
+    @GetMapping("/reservations")
+    public String myReservations(Principal principal, Model model) {
+        User user = userService.findByLogin(principal.getName());
 
-    // 2. Déconnexion immédiate
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    if (auth != null) {
-        new SecurityContextLogoutHandler().logout(request, response, auth);
+        List<Reservation> reservations = reservationService.findByUser(user.getId());
+
+        model.addAttribute("reservations", reservations);
+        model.addAttribute("user", user);
+        return "auth/my-reservations";
     }
 
-    redirectAttributes.addFlashAttribute("successMessage",
-            "Votre compte a été supprimé. Au revoir.");
-    return "redirect:/login";
-}
+    // =========================================================
+    // 🆕 POST /profile/reservations/{id}/cancel — Annuler une résa
+    // =========================================================
+
+    @PostMapping("/reservations/{id}/cancel")
+    public String cancelReservation(
+            @PathVariable Long id,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+
+        User user = userService.findByLogin(principal.getName());
+
+        Reservation reservation = reservationService.findById(id)
+                .orElse(null);
+
+        if (reservation == null) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Réservation introuvable.");
+            return "redirect:/profile/reservations";
+        }
+
+        // 🛡️ Sécurité : seul le propriétaire peut annuler sa résa
+        if (!reservation.getUser().getId().equals(user.getId())) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Vous ne pouvez pas annuler cette réservation.");
+            return "redirect:/profile/reservations";
+        }
+
+        // On n'annule que les réservations PENDING (les CONFIRMED nécessitent un remboursement)
+        if (!reservation.isPending()) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Seules les réservations en attente peuvent être annulées directement.");
+            return "redirect:/profile/reservations";
+        }
+
+        reservationService.cancel(id);
+        redirectAttributes.addFlashAttribute("success",
+                "Réservation annulée avec succès.");
+        return "redirect:/profile/reservations";
+    }
 }

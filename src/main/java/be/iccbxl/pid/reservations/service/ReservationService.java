@@ -2,7 +2,6 @@ package be.iccbxl.pid.reservations.service;
 
 import be.iccbxl.pid.reservations.model.Representation;
 import be.iccbxl.pid.reservations.model.Reservation;
-import be.iccbxl.pid.reservations.model.ReservationStatus;
 import be.iccbxl.pid.reservations.model.User;
 import be.iccbxl.pid.reservations.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
