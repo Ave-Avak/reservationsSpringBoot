@@ -9,7 +9,8 @@ import lombok.Setter;
 import java.time.Year;
 import java.util.ArrayList;     
 import java.util.List;              
-
+import java.util.HashSet;
+import java.util.Set;
 /**
  * Représente un spectacle (pièce centrale du projet).
  *
@@ -72,6 +73,13 @@ public class Show {
                fetch = FetchType.LAZY)
     private List<Representation> representations = new ArrayList<>();
 
+    /**
+     * 🆕 Participations artistes (ArtistType) à ce spectacle.
+     * Relation ManyToMany INVERSE de ArtistType.shows.
+     */
+    @ManyToMany(mappedBy = "shows", fetch = FetchType.LAZY)
+    private Set<ArtistType> artistTypes = new HashSet<>();
+
     // =============================================================
     // CONSTRUCTEUR MÉTIER
     // =============================================================
@@ -116,7 +124,22 @@ public class Show {
             this.representations.remove(representation);
         }
     }
+    
+    // =============================================================
+    // 🆕 MÉTHODES MÉTIER pour ArtistTypes (synchronisation bilatérale)
+    // =============================================================
 
+    public void addArtistType(ArtistType artistType) {
+        if (this.artistTypes.add(artistType)) {
+            artistType.getShows().add(this);
+        }
+    }
+
+    public void removeArtistType(ArtistType artistType) {
+        if (this.artistTypes.remove(artistType)) {
+            artistType.getShows().remove(this);
+        }
+    }
     // =============================================================
     // MÉTHODES MÉTIER
     // =============================================================

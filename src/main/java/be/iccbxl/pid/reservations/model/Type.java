@@ -10,11 +10,6 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * Représente un type/rôle d'artiste sur un spectacle.
- *
- * Relation ManyToMany INVERSE de Artist.types.
- */
 @Entity
 @Table(name = "types")
 @Getter
@@ -31,11 +26,14 @@ public class Type {
     private String type;
 
     /**
-     * 🆕 Artistes qui peuvent tenir ce type/rôle.
-     * Côté INVERSE de la relation : mappedBy = nom du champ côté Artist.
+     * 🆕 Les ArtistTypes qui utilisent ce type/rôle.
+     * Relation inverse de ArtistType.type.
      */
-    @ManyToMany(mappedBy = "types", fetch = FetchType.LAZY)
-    private Set<Artist> artists = new HashSet<>();
+    @OneToMany(mappedBy = "type",
+               cascade = CascadeType.ALL,
+               orphanRemoval = true,
+               fetch = FetchType.LAZY)
+    private Set<ArtistType> artistTypes = new HashSet<>();
 
     // =============================================================
     // CONSTRUCTEUR DE CONFORT

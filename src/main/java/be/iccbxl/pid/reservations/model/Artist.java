@@ -31,19 +31,17 @@ public class Artist {
     private String lastname;
 
     /**
-     * 🆕 Types/rôles que cet artiste peut tenir (acteur, metteur en scène...).
+     * 🆕 Les rôles que cet artiste peut tenir (chaque rôle = ArtistType).
+     * Remplace l'ancienne ManyToMany directe vers Type.
      *
-     * Relation ManyToMany OWNER : c'est cette entité qui définit la table de jointure.
-     * Set au lieu de List : un artiste ne peut pas avoir deux fois le même type.
+     * Relation OneToMany vers ArtistType (qui contient le lien vers Type).
+     * Pour récupérer les types : artist.getArtistTypes().stream().map(ArtistType::getType)
      */
-    @ManyToMany(fetch = FetchType.LAZY,
-                cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-        name = "artist_type",
-        joinColumns = @JoinColumn(name = "artist_id"),
-        inverseJoinColumns = @JoinColumn(name = "type_id")
-    )
-    private Set<Type> types = new HashSet<>();
+    @OneToMany(mappedBy = "artist",
+               cascade = CascadeType.ALL,
+               orphanRemoval = true,
+               fetch = FetchType.LAZY)
+    private Set<ArtistType> artistTypes = new HashSet<>();
 
     // =============================================================
     // CONSTRUCTEUR MÉTIER
@@ -55,30 +53,46 @@ public class Artist {
     }
 
     // =============================================================
-    // 🆕 MÉTHODES MÉTIER pour Types (synchronisation bilatérale)
+    // MÉTHODES MÉTIER pour ArtistTypes (synchronisation bilatérale)
     // =============================================================
 
     /**
-     * Ajoute un type à cet artiste (synchronise les 2 côtés).
+     * Associe ce type/rôle à cet artiste (création d'un ArtistType).
      */
-    public void addType(Type type) {
-        if (this.types.add(type)) {  // Set.add() renvoie true si ajouté (pas déjà présent)
-            type.getArtists().add(this);
+    public ArtistType addType(Type type) {
+        // Vérifie si l'artiste a déjà ce type
+        for (ArtistType at : this.artistTypes) {
+            if (at.getType().equals(type)) {
+                return at;  // déjà associé, on renvoie le ArtistType existant
+            }
         }
+        ArtistType at = new ArtistType(this, type);
+        this.artistTypes.add(at);
+        type.getArtistTypes().add(at);
+        return at;
     }
 
     /**
-     * Retire un type de cet artiste.
+     * Retire un type/rôle de cet artiste.
      */
     public void removeType(Type type) {
-        if (this.types.remove(type)) {
-            type.getArtists().remove(this);
+        ArtistType toRemove = null;
+        for (ArtistType at : this.artistTypes) {
+            if (at.getType().equals(type)) {
+                toRemove = at;
+                break;
+            }
+        }
+        if (toRemove != null) {
+            this.artistTypes.remove(toRemove);
+            type.getArtistTypes().remove(toRemove);
+            toRemove.setArtist(null);
+            toRemove.setType(null);
         }
     }
 
     // =============================================================
-    // EQUALS / HASHCODE basés sur l'id seulement
-    // (évite les boucles infinies avec les relations bilatérales)
+    // EQUALS / HASHCODE basés sur l'id
     // =============================================================
 
     @Override
@@ -93,10 +107,6 @@ public class Artist {
     public int hashCode() {
         return Objects.hash(id);
     }
-
-    // =============================================================
-    // toString
-    // =============================================================
 
     @Override
     public String toString() {
