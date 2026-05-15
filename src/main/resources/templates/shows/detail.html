@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/main}">
+
+<head>
+    <title th:text="${show.title}">Détail spectacle</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <div class="container mt-4">
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a th:href="@{/shows}">Catalogue</a>
+                </li>
+                <li class="breadcrumb-item active" th:text="${show.title}">Titre</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+
+            <!-- Colonne gauche : poster -->
+            <div class="col-md-4 mb-4">
+                <img th:if="${show.posterUrl != null}"
+                     th:src="${show.posterUrl}"
+                     class="img-fluid rounded shadow"
+                     th:alt="${show.title}">
+                <div th:unless="${show.posterUrl != null}"
+                     class="bg-secondary text-white rounded d-flex align-items-center justify-content-center"
+                     style="height: 450px; font-size: 5rem;">
+                    🎭
+                </div>
+            </div>
+
+            <!-- Colonne droite : infos -->
+            <div class="col-md-8">
+                <h1 th:text="${show.title}">Titre</h1>
+
+                <div class="mb-3">
+                    <span th:if="${show.bookable}" class="badge bg-success">Réservations ouvertes</span>
+                    <span th:unless="${show.bookable}" class="badge bg-secondary">Non disponible</span>
+                </div>
+
+                <!-- Métadonnées -->
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 200px;">📍 Lieu de création</th>
+                        <td th:text="${show.location.designation}">Lieu</td>
+                    </tr>
+                    <tr>
+                        <th>🏙 Ville</th>
+                        <td th:text="${show.location.locality.fullName}">Ville</td>
+                    </tr>
+                    <tr th:if="${show.duration != null}">
+                        <th>⏱ Durée</th>
+                        <td th:text="${show.formattedDuration}">durée</td>
+                    </tr>
+                    <tr th:if="${show.createdIn != null}">
+                        <th>📅 Année de création</th>
+                        <td th:text="${show.createdIn}">année</td>
+                    </tr>
+                </table>
+
+                <!-- Description -->
+                <div class="mt-4" th:if="${show.description != null}">
+                    <h5>À propos</h5>
+                    <p th:text="${show.description}">Description</p>
+                </div>
+
+            </div>
+        </div>
+
+        <hr class="my-5">
+
+        <!-- Représentations à venir -->
+        <h3 class="mb-4">🗓 Représentations à venir</h3>
+
+        <div th:if="${#lists.isEmpty(upcomingRepresentations)}" class="alert alert-warning">
+            <strong>Aucune représentation programmée pour le moment.</strong>
+            <p class="mb-0">Revenez bientôt pour découvrir les prochaines dates.</p>
+        </div>
+
+        <div class="row" th:unless="${#lists.isEmpty(upcomingRepresentations)}">
+            <div th:each="rep : ${upcomingRepresentations}" class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title" th:text="${rep.formattedSchedule}">Date</h6>
+                        <p class="card-text small text-muted mb-3">
+                            📍 <span th:text="${rep.location.designation}">Lieu</span>
+                        </p>
+
+                        <!-- Bouton réserver : visible uniquement si connecté + bookable -->
+                        <div sec:authorize="isAuthenticated()" th:if="${show.bookable}">
+                            <button type="button" class="btn btn-primary btn-sm" disabled>
+                                Réserver (bientôt disponible)
+                            </button>
+                            <small class="text-muted d-block mt-1">
+                                💡 Le formulaire de réservation sera implémenté prochainement.
+                            </small>
+                        </div>
+
+                        <!-- Internaute : invitation à se connecter -->
+                        <div sec:authorize="!isAuthenticated()">
+                            <a th:href="@{/login}" class="btn btn-outline-primary btn-sm">
+                                Se connecter pour réserver
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+</body>
+</html>

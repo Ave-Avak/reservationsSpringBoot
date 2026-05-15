@@ -2,6 +2,8 @@ package be.iccbxl.pid.reservations.repository;
 
 import be.iccbxl.pid.reservations.model.Show;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,28 +14,40 @@ public interface ShowRepository extends JpaRepository<Show, Long> {
 
     /**
      * Recherche par slug (URL friendly).
-     * Ex: /shows/ayiti
+     * 🆕 JOIN FETCH pour éviter LazyInit dans le template détail.
      */
-    Optional<Show> findBySlug(String slug);
+    @Query("""
+        SELECT s FROM Show s
+        JOIN FETCH s.location loc
+        JOIN FETCH loc.locality
+        WHERE s.slug = :slug
+    """)
+    Optional<Show> findBySlug(@Param("slug") String slug);
 
-    /**
-     * Vérifie l'unicité du slug avant insertion.
-     */
     boolean existsBySlug(String slug);
 
     /**
-     * Tous les spectacles bookables, triés par titre.
-     * Utile pour la page publique catalogue.
+     * Spectacles bookables avec leur lieu chargé (catalogue public).
      */
+    @Query("""
+        SELECT s FROM Show s
+        JOIN FETCH s.location loc
+        JOIN FETCH loc.locality
+        WHERE s.bookable = true
+        ORDER BY s.title ASC
+    """)
     List<Show> findByBookableTrueOrderByTitleAsc();
 
-    /**
-     * Tous les spectacles d'un lieu donné.
-     */
     List<Show> findByLocationId(Long locationId);
 
     /**
-     * Tous les spectacles triés par titre.
+     * Tous les shows (admin) avec leur lieu chargé.
      */
+    @Query("""
+        SELECT s FROM Show s
+        JOIN FETCH s.location loc
+        JOIN FETCH loc.locality
+        ORDER BY s.title ASC
+    """)
     List<Show> findAllByOrderByTitleAsc();
 }

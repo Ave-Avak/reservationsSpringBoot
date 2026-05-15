@@ -25,6 +25,7 @@ public class SecurityConfig {
                 .requestMatchers("/", "/login", "/register", "/forgot-password", "/reset-password/**").permitAll()
                 // Lecture des artistes accessible à tous (provisoire)
                 .requestMatchers("/artists", "/artists/{id:[\\d]+}").permitAll()
+                .requestMatchers("/shows", "/shows/**").permitAll() // catalogue public
                 // Création/modification/suppression d'artistes réservée aux ADMIN
                 .requestMatchers("/artists/new", "/artists/{id:[\\d]+}/edit", "/artists/{id:[\\d]+}/delete").hasRole("ADMIN")
                 // Toutes les autres URL nécessitent d'être connecté

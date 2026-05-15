@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+
+<head>
+    <title th:text="${title}">Catalogue</title>
+</head>
+
+<body>
+<div layout:fragment="content">
+
+    <div class="container mt-4">
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>🎭 Catalogue des spectacles</h1>
+                <p class="text-muted mb-0">
+                    Découvrez notre programmation et réservez vos places.
+                </p>
+            </div>
+            <span class="badge bg-secondary fs-6"
+                  th:text="${#lists.size(shows)} + ' spectacle(s)'">0</span>
+        </div>
+
+        <!-- Aucun spectacle -->
+        <div th:if="${#lists.isEmpty(shows)}" class="alert alert-info">
+            <h5>Aucun spectacle disponible pour le moment</h5>
+            <p class="mb-0">Revenez bientôt pour découvrir notre nouvelle programmation !</p>
+        </div>
+
+        <!-- Grille de spectacles -->
+        <div class="row" th:unless="${#lists.isEmpty(shows)}">
+            <div th:each="show : ${shows}" class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+
+                    <!-- Poster (ou placeholder) -->
+                    <img th:if="${show.posterUrl != null}"
+                         th:src="${show.posterUrl}"
+                         class="card-img-top"
+                         style="height: 300px; object-fit: cover;"
+                         th:alt="${show.title}">
+                    <div th:unless="${show.posterUrl != null}"
+                         class="card-img-top bg-secondary text-white d-flex align-items-center justify-content-center"
+                         style="height: 300px; font-size: 3rem;">
+                        🎭
+                    </div>
+
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title" th:text="${show.title}">Titre</h5>
+
+                        <p class="card-text text-muted small mb-2">
+                            📍 <span th:text="${show.location.designation}">Lieu</span>
+                            <br>
+                            <span class="ms-3" th:text="${show.location.locality.locality}">Ville</span>
+                        </p>
+
+                        <p class="card-text small mb-2" th:if="${show.duration != null}">
+                            ⏱ <span th:text="${show.formattedDuration}">durée</span>
+                        </p>
+
+                        <p class="card-text small text-truncate"
+                           th:if="${show.description != null}"
+                           th:text="${show.description}">
+                            Description...
+                        </p>
+
+                        <!-- Bouton détail -->
+                        <a th:href="@{'/shows/' + ${show.slug}}"
+                           class="btn btn-primary mt-auto">
+                            Voir détails →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+</body>
+</html>

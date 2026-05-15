@@ -1,0 +1,8 @@
+/* Tronque le texte à 3 lignes avec ellipsis */
+.text-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
