@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/main}">
+
+<head>
+    <title>Mon profil</title>
+</head>
+
+<body>
+
+<div layout:fragment="content">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+
+            <h1 class="mb-4">Mon profil</h1>
+
+            <!-- Informations en lecture seule -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <p class="mb-1"><strong>Identifiant :</strong> <span th:text="${user.login}"></span></p>
+                    <p class="mb-1"><strong>Membre depuis :</strong>
+                        <span th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy')}"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- Section 1 : Modifier mes informations      -->
+            <!-- ========================================== -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Modifier mes informations</h5>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/profile/update}" th:object="${profileDto}" method="post">
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" id="email" th:field="*{email}"
+                                   class="form-control"
+                                   th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'"
+                                   required>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}"
+                                 th:errors="*{email}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="firstname" class="form-label">Prénom</label>
+                            <input type="text" id="firstname" th:field="*{firstname}"
+                                   class="form-control"
+                                   th:classappend="${#fields.hasErrors('firstname')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('firstname')}"
+                                 th:errors="*{firstname}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="lastname" class="form-label">Nom</label>
+                            <input type="text" id="lastname" th:field="*{lastname}"
+                                   class="form-control"
+                                   th:classappend="${#fields.hasErrors('lastname')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('lastname')}"
+                                 th:errors="*{lastname}"></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- Section 2 : Changer mon mot de passe       -->
+            <!-- ========================================== -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Changer mon mot de passe</h5>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/profile/password}" th:object="${passwordDto}" method="post">
+
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">Mot de passe actuel *</label>
+                            <input type="password" id="currentPassword" th:field="*{currentPassword}"
+                                   class="form-control"
+                                   th:classappend="${#fields.hasErrors('currentPassword')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('currentPassword')}"
+                                 th:errors="*{currentPassword}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">Nouveau mot de passe *</label>
+                            <input type="password" id="newPassword" th:field="*{newPassword}"
+                                   class="form-control"
+                                   th:classappend="${#fields.hasErrors('newPassword')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('newPassword')}"
+                                 th:errors="*{newPassword}"></div>
+                            <small class="form-text text-muted">8 caractères minimum.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="newPasswordConfirm" class="form-label">Confirmer le nouveau mot de passe *</label>
+                            <input type="password" id="newPasswordConfirm" th:field="*{newPasswordConfirm}"
+                                   class="form-control"
+                                   th:classappend="${#fields.hasErrors('newPasswordConfirm')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('newPasswordConfirm')}"
+                                 th:errors="*{newPasswordConfirm}"></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Changer le mot de passe</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- Section 3 : Zone dangereuse                -->
+            <!-- ========================================== -->
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">Zone dangereuse</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">
+                        La suppression de votre compte est <strong>définitive</strong>
+                        et ne peut pas être annulée.
+                    </p>
+
+                    <form th:action="@{/profile/delete}" method="post"
+                          onsubmit="return confirm('Êtes-vous SÛR de vouloir supprimer votre compte ? Cette action est irréversible.');">
+                        <button type="submit" class="btn btn-danger">Supprimer mon compte</button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
