@@ -9,7 +9,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-
+import java.util.ArrayList;
+import java.util.List;
 @Data
 @NoArgsConstructor
 @Entity
@@ -53,4 +54,28 @@ public class User {
         inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<Role> roles = new HashSet<>();
+    /**
+     * 🆕 Réservations faites par cet utilisateur.
+     */
+    @OneToMany(mappedBy = "user",
+               cascade = CascadeType.ALL,
+               orphanRemoval = true,
+               fetch = FetchType.LAZY)
+    private List<Reservation> reservations = new ArrayList<>();
+    // =============================================================
+    // 🆕 MÉTHODES MÉTIER pour Reservations (synchronisation bilatérale)
+    // =============================================================
+
+    public void addReservation(Reservation reservation) {
+        if (!this.reservations.contains(reservation)) {
+            this.reservations.add(reservation);
+            reservation.setUser(this);
+        }
+    }
+
+    public void removeReservation(Reservation reservation) {
+        if (this.reservations.contains(reservation)) {
+            this.reservations.remove(reservation);
+        }
+    }
 }

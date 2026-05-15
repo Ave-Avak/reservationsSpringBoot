@@ -9,7 +9,8 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-
+import java.util.ArrayList;
+import java.util.List;
 /**
  * Représente une date précise où un spectacle est joué.
  *
@@ -43,7 +44,14 @@ public class Representation {
 
     @Column(name = "schedule", nullable = false)
     private LocalDateTime schedule;
-
+    /**
+     * 🆕 Réservations pour cette représentation.
+     */
+    @OneToMany(mappedBy = "representation",
+               cascade = CascadeType.ALL,
+               orphanRemoval = true,
+               fetch = FetchType.LAZY)
+    private List<Reservation> reservations = new ArrayList<>();
     // =============================================================
     // CONSTRUCTEUR MÉTIER
     // =============================================================
@@ -77,7 +85,32 @@ public class Representation {
             newLocation.getRepresentations().add(this);
         }
     }
+    // =============================================================
+    // 🆕 MÉTHODES MÉTIER pour Reservations (synchronisation bilatérale)
+    // =============================================================
 
+    public void addReservation(Reservation reservation) {
+        if (!this.reservations.contains(reservation)) {
+            this.reservations.add(reservation);
+            reservation.setRepresentation(this);
+        }
+    }
+
+    public void removeReservation(Reservation reservation) {
+        if (this.reservations.contains(reservation)) {
+            this.reservations.remove(reservation);
+        }
+    }
+
+    /**
+     * Calcule le total des places réservées pour cette représentation.
+     */
+    public int getTotalReservedPlaces() {
+        return reservations.stream()
+                .filter(r -> r.getStatus() != ReservationStatus.CANCELLED)
+                .mapToInt(Reservation::getPlaces)
+                .sum();
+    }
     // =============================================================
     // MÉTHODES MÉTIER
     // =============================================================
