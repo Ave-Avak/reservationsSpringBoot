@@ -97,12 +97,10 @@
 
                         <!-- Bouton réserver : visible uniquement si connecté + bookable -->
                         <div sec:authorize="isAuthenticated()" th:if="${show.bookable}">
-                            <button type="button" class="btn btn-primary btn-sm" disabled>
-                                Réserver (bientôt disponible)
-                            </button>
-                            <small class="text-muted d-block mt-1">
-                                💡 Le formulaire de réservation sera implémenté prochainement.
-                            </small>
+                            <a th:href="@{/reservations/new(representationId=${rep.id})}"
+                                class="btn btn-primary btn-sm">
+                                 🎫 Réserver
+                            </a>
                         </div>
 
                         <!-- Internaute : invitation à se connecter -->

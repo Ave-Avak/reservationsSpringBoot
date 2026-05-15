@@ -63,7 +63,6 @@ public class Reservation {
     /**
      * Statut de la réservation.
      * EnumType.STRING : stocké en BDD comme "PENDING" plutôt que comme 0/1/2...
-     * (plus lisible, robuste si on ajoute des statuts).
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
@@ -74,35 +73,28 @@ public class Reservation {
     // =============================================================
 
     public Reservation(User user, Representation representation, Integer places) {
-        setUser(user);
-        setRepresentation(representation);
+        this.user = user;
+        this.representation = representation;
         this.places = places;
         this.bookingDate = LocalDateTime.now();
         this.status = ReservationStatus.PENDING;
     }
 
     // =============================================================
-    // SETTERS INTELLIGENTS (synchronisation bilatérale)
+    // SETTERS (synchronisation laissée à Hibernate via la FK)
     // =============================================================
+    // Note : on n'utilise plus de "setters intelligents" qui touchent
+    // les collections inverses (user.reservations, representation.reservations)
+    // car celles-ci sont LAZY et provoquent LazyInitializationException
+    // hors d'une transaction.
+    // Hibernate maintient la cohérence en BDD via la foreign key.
 
     public void setUser(User newUser) {
-        if (this.user != null) {
-            this.user.getReservations().remove(this);
-        }
         this.user = newUser;
-        if (newUser != null && !newUser.getReservations().contains(this)) {
-            newUser.getReservations().add(this);
-        }
     }
 
     public void setRepresentation(Representation newRepresentation) {
-        if (this.representation != null) {
-            this.representation.getReservations().remove(this);
-        }
         this.representation = newRepresentation;
-        if (newRepresentation != null && !newRepresentation.getReservations().contains(this)) {
-            newRepresentation.getReservations().add(this);
-        }
     }
 
     // =============================================================

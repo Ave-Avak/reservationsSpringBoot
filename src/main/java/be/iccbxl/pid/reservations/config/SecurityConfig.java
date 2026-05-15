@@ -28,6 +28,8 @@ public class SecurityConfig {
                 .requestMatchers("/shows", "/shows/**").permitAll() // catalogue public
                 // Création/modification/suppression d'artistes réservée aux ADMIN
                 .requestMatchers("/artists/new", "/artists/{id:[\\d]+}/edit", "/artists/{id:[\\d]+}/delete").hasRole("ADMIN")
+                // Réservations : nécessite d'être connecté
+                .requestMatchers("/reservations/**").authenticated()
                 // Toutes les autres URL nécessitent d'être connecté
                 .anyRequest().authenticated()
             )

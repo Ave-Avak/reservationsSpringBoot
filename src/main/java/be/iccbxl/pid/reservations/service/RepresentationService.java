@@ -56,6 +56,14 @@ public class RepresentationService {
         return representationRepository.findByScheduleAfterOrderByScheduleAsc(LocalDateTime.now());
     }
 
+    /**
+     * Récupère une représentation avec show/location/locality chargés en une seule requête.
+     * Utilisé par le contrôleur de réservation pour éviter LazyInit.
+     */
+    public Optional<Representation> findByIdWithDetails(Long id) {
+        return representationRepository.findByIdWithDetails(id);
+    }
+    
     @Transactional
     public Representation create(Show show, Location location, LocalDateTime schedule) {
         Representation representation = new Representation(show, location, schedule);

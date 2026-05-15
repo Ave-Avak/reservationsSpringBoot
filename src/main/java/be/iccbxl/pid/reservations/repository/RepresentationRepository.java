@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
+import java.util.Optional;
 @Repository
 public interface RepresentationRepository extends JpaRepository<Representation, Long> {
 
@@ -78,4 +78,16 @@ public interface RepresentationRepository extends JpaRepository<Representation, 
         ORDER BY r.schedule ASC
     """)
     List<Representation> findAllByOrderByScheduleAsc();
+
+    /**
+     * Récupère une représentation avec show et location chargés (pour le formulaire de réservation).
+     */
+    @Query("""
+        SELECT r FROM Representation r
+        JOIN FETCH r.show
+        JOIN FETCH r.location loc
+        JOIN FETCH loc.locality
+        WHERE r.id = :id
+    """)
+    Optional<Representation> findByIdWithDetails(@Param("id") Long id);
 }
